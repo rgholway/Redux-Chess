@@ -1,39 +1,156 @@
 .App {
-  text-align: center;
+  height: 100vh;
+  width: 100vh;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.board {
+  flex-direction: column-reverse;
+  align-self: center;
+  height: 500px;
+  width: 500px;
+  margin-top: 10vh;
+  margin-left: 20%;
+  margin-right: auto;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-float infinite 3s ease-in-out;
-  }
+.box {
+  float: left;
+  height: 12.5%;
+  width: 12.5%;
 }
 
-.App-header {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+.BlackRook {
+  margin-left: 20%;
+  margin-right: 20%;
+  margin-top: 20%;
+  height: 80%;
+  width: 60%;
+  background-color: Black;
+  z-index: 2;
 }
 
-.App-link {
-  color: rgb(112, 76, 182);
+.WhiteRook {
+  margin-left: 20%;
+  margin-right: 20%;
+  margin-top: 20%;
+  height: 80%;
+  width: 60%;
+  background-color: White;
+  z-index: 2;
 }
 
-@keyframes App-logo-float {
-  0% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(10px)
-  }
-  100% {
-    transform: translateY(0px)
-  }
+.BlackKnight {
+  margin-top: 20%;
+  margin-left: 20%;
+  width: 0;
+    height: 0;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+    border-right:20px solid black;
+}
+
+.WhiteKnight {
+  margin-top: 20%;
+  margin-left: 20%;
+  width: 0;
+    height: 0;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+
+    border-right:20px solid white;
+}
+
+.BlackBishop {
+  margin-left: 30%;
+  margin-right: 20%;
+  margin-top: 20%;
+  height: 80%;
+  width: 30%;
+  background-color: Black;
+  z-index: 2;
+}
+
+.WhiteBishop {
+  margin-left: 30%;
+  margin-right: 20%;
+  margin-top: 20%;
+  height: 80%;
+  width: 30%;
+  background-color: White;
+  z-index: 2;
+}
+
+.BlackQueen {
+  margin-top: 20%;
+  width: 0;
+ height: 0;
+ border-left: 30px solid transparent;
+ border-right: 30px solid transparent;
+
+ border-bottom: 30px solid black;
+}
+
+.WhiteQueen {
+  margin-top: 20%;
+  width: 0;
+ height: 0;
+ border-left: 30px solid transparent;
+ border-right: 30px solid transparent;
+
+ border-bottom: 30px solid white;
+}
+
+.BlackKing {
+  margin-top: 20%;
+  width: 0;
+  height: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+
+  border-top: 30px solid black;
+}
+
+.WhiteKing {
+  margin-top: 20%;
+  width: 0;
+  height: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+
+  border-top: 30px solid white;
+}
+
+.BlackPawn {
+  margin-left: 20%;
+  margin-right: 40%;
+  margin-top: 40%;
+  height: 60%;
+  width: 50%;
+  background-color: Black;
+  z-index: 2;
+}
+
+.WhitePawn {
+  margin-left: 20%;
+  margin-right: 40%;
+  margin-top: 40%;
+  height: 60%;
+  width: 50%;
+  background-color: White;
+  z-index: 2;
+}
+
+.BlackQueenBishop {
+  float: left;
+  height: 12.5%;
+  width: 12.5%;
+}
+
+.PotentialMove {
+  margin-left: 30%;
+  margin-top: 30%;
+  margin-right: 30%;
+  height: 15%;
+  width: 15;
+  background-color: lightgrey;
 }

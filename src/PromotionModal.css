@@ -1,0 +1,18 @@
+.PromotionModal {
+  position: relative;
+  margin-bottom: 150%;
+  margin-top: -70%;
+  margin-left: -70%;
+  margin-right: auto;
+  height: 30vh;
+  width: 10vw;
+  background: red;
+  flex-direction: row;
+}
+
+.piecePromotionBox {
+  width: 50%;
+  height: 50%;
+  border: solid 1px black;
+  padding: 10%;
+}
