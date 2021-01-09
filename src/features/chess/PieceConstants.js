@@ -1,3 +1,5 @@
+import {selectBox} from "./chessSlice"
+
 export const rules = {
   WhitePawn: {
     movement: {
@@ -17,8 +19,8 @@ export const rules = {
       badMoves: {
         isRightWall: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_UP"],
         isLeftWall: ["DIAGONAL_LEFT_DOWN", "DIAGONAL_RIGHT_UP"],
-        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN"],
-        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP"]
+        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP"],
+        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN"]
       }
       // const movement = {
       //   DOWN1: -8,
@@ -52,8 +54,8 @@ export const rules = {
       badMoves: {
         isRightWall: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_UP"],
         isLeftWall: ["DIAGONAL_LEFT_DOWN", "DIAGONAL_RIGHT_UP"],
-        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN"],
-        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP"]
+        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP"],
+        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN"]
       }
     },
   },
@@ -122,12 +124,24 @@ export const rules = {
       ],
       badMoves: {
         isLeftWall: [
-            "DOWN15",
-            "DOWN6"
+            "UP15",
+            "UP6",
+            "DOWN10",
+            "DOWN17"
         ],
         isRightWall: [
-            "UP15",
-            "UP6"
+            "DOWN15",
+            "DOWN6",
+            "UP10",
+            "UP17"
+        ],
+        isNextToRightWall: [
+          "DOWN6",
+          "UP10"
+        ],
+        isNextToLeftWall: [
+          "UP6",
+          "DOWN10"
         ]
       }
     },
@@ -189,9 +203,105 @@ export const rules = {
       badMoves: {
         isRightWall: ["RIGHT1", "DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_UP"],
         isLeftWall: ["LEFT1", "DIAGONAL_LEFT_DOWN", "DIAGONAL_RIGHT_UP"],
-        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN", "UP1"],
-        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP", "DOWN1"]
+        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN", "DOWN1"],
+        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP", "UP1"]
       }
+    },
+  },
+  WhiteKing: {
+    movement: {
+      move: [
+        "RIGHT1",
+        "LEFT1",
+        "UP1",
+        "DOWN1",
+        "DIAGONAL_RIGHT_UP",
+        "DIAGONAL_LEFT_UP",
+        "DIAGONAL_RIGHT_DOWN",
+        "DIAGONAL_LEFT_DOWN",
+      ],
+      specialMoves: {
+        queenSideCastle: "QueenSideCastle",
+        kingSideCastle: "KingSideCastle",
+      },
+      attackedFrom: [
+        "DOWN17",
+        "DOWN15",
+        "DOWN6",
+        "DOWN10",
+        "UP17",
+        "UP15",
+        "UP6",
+        "UP10"
+      ],
+      badMoves: {
+        isRightWall: ["RIGHT1", "DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_UP","DOWN15",
+        "DOWN6",
+        "UP10",
+        "UP17" ],
+        isLeftWall: ["LEFT1", "DIAGONAL_LEFT_DOWN", "DIAGONAL_RIGHT_UP", "UP15",
+        "UP6",
+        "DOWN10",
+        "DOWN17"],
+        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN", "DOWN1"],
+        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP", "UP1"],
+        isNextToRightWall: [
+          "DOWN6",
+          "UP10"
+        ],
+        isNextToLeftWall: [
+          "UP6",
+          "DOWN10"
+        ]
+      },
+    },
+  },
+  BlackKing: {
+    movement: {
+      move: [
+        "RIGHT1",
+        "LEFT1",
+        "UP1",
+        "DOWN1",
+        "DIAGONAL_RIGHT_UP",
+        "DIAGONAL_LEFT_UP",
+        "DIAGONAL_RIGHT_DOWN",
+        "DIAGONAL_LEFT_DOWN",
+      ],
+      specialMoves: {
+        queenSideCastle: "QueenSideCastle",
+        kingSideCastle: "KingSideCastle",
+      },
+      attackedFrom: [
+        "DOWN17",
+        "DOWN15",
+        "DOWN6",
+        "DOWN10",
+        "UP17",
+        "UP15",
+        "UP6",
+        "UP10"
+      ],
+      badMoves: {
+        isRightWall: ["RIGHT1", "DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_UP","DOWN15",
+        "DOWN6",
+        "UP10",
+        "UP17" ],
+        isLeftWall: ["LEFT1", "DIAGONAL_LEFT_DOWN", "DIAGONAL_RIGHT_UP", "UP15",
+        "UP6",
+        "DOWN10",
+        "DOWN17"],
+        isTopRow: ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_DOWN", "DOWN1"],
+        isBottomRow: ["DIAGONAL_RIGHT_UP", "DIAGONAL_LEFT_UP", "UP1"],
+        isNextToRightWall: [
+          "DOWN6",
+          "UP10"
+        ],
+        isNextToLeftWall: [
+          "UP6",
+          "DOWN10"
+        ]
+      },
     },
   },
 };
@@ -218,19 +328,20 @@ const movement = {
 };
 
 
-export const calculatePotentialMoves = (piece, board) => {
-  console.log(piece)
+export const calculatePotentialMoves = (piece, boxes, isCheckingKing) => {
   let options = [];
 
   if (!piece) {
-    console.log('reeeee')
     return []
   }
   //Piece Movement
-  console.log(piece.pieceName)
   const pieceRules = rules[piece.pieceName];
   const moves = pieceRules?.movement?.move;
   let filteredMoves = [...moves]
+
+  //special Pieces
+  let whiteKing = ''
+  let blackKing = ''
 
   //Piece Position
   const isRightWall = (piece.id + 1) % 8 === 0;
@@ -246,8 +357,9 @@ export const calculatePotentialMoves = (piece, board) => {
   let otherPieces = [];
   let walls = [];
   let isPieceOnWall = false
+  let isDiagonal = false
 
-  board.boxes.map((box) => {
+  boxes.map((box) => {
     if (box.piece.team === piece.team) {
       boardMoves.push(box.id);
     } else if (box.hasPiece && box.piece.team !== piece.team) {
@@ -256,119 +368,281 @@ export const calculatePotentialMoves = (piece, board) => {
     if (box.isWall) {
       walls.push(box.id);
     }
+    if (box?.piece?.pieceName === 'WhiteKing') {
+      whiteKing = box?.piece
+    }
+
+    if (box?.piece?.pieceName === 'BlackKing') {
+      blackKing = box?.piece
+    }
 
   });
 
+  const enemyKing = piece.team === 2 ? blackKing : whiteKing
+
   if (piece.isPawn) {
-    return potentialMoves = calculatePawn(piece, boardMoves, otherPieces, walls)
+    return potentialMoves = calculatePawn(piece, boardMoves, otherPieces, walls, isCheckingKing)
+  }
+
+  if (piece?.isKing ){
+    isDiagonal = false
+
+    if (isRightWall) {
+      isPieceOnWall = true
+      if (isTopRow) {
+        const badMoves = pieceRules?.movement?.badMoves?.isRightWall.concat(pieceRules?.movement?.badMoves?.isTopRow)
+        filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+        return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, false)
+      }
+      if (isBottomRow) {
+        const badMoves = pieceRules?.movement?.badMoves?.isRightWall.concat(pieceRules?.movement?.badMoves?.isBottomRow)
+        filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+        return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
+      }
+      const badMoves = pieceRules?.movement?.badMoves?.isRightWall
+      filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+      return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
+    }
+    if (isLeftWall) {
+      isPieceOnWall = true
+      if (isTopRow) {
+        const badMoves = pieceRules?.movement?.badMoves?.isLeftWall.concat(pieceRules?.movement?.badMoves?.isTopRow)
+        filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+        return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
+      }
+      if (isBottomRow) {
+        const badMoves = pieceRules?.movement?.badMoves?.isLeftWall.concat(pieceRules?.movement?.badMoves?.isBottomRow)
+        filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+        return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
+      }
+      const badMoves = pieceRules?.movement?.badMoves?.isLeftWall
+      filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+      return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
+    }
+    if (isTopRow) {
+      const badMoves = pieceRules?.movement?.badMoves?.isTopRow
+      isPieceOnWall = true
+      if (badMoves?.includes('DIAGONAL_LEFT_DOWN') || badMoves?.includes('DIAGONAL_RIGHT_DOWN')) {
+        isDiagonal = true
+      }
+      filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+      return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
+    }
+    if (isBottomRow) {
+      isPieceOnWall = true
+      const badMoves = pieceRules?.movement?.badMoves?.isBottomRow
+      if (badMoves?.includes('DIAGONAL_LEFT_UP') || badMoves?.includes('DIAGONAL_RIGHT_UP')) {
+        isDiagonal = true
+      }
+      filteredMoves = moves.filter((move) => !badMoves?.includes(move));
+      return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
+    }
+    return calculateKing(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal, boxes, piece.team, isCheckingKing)
   }
 
   if (piece.isHorse) {
     if (isRightWall) {
       const badMoves = pieceRules?.movement?.badMoves?.isRightWall
-      console.log(filteredMoves)
       filteredMoves = moves.filter((move) => !badMoves?.includes(move));
-      console.log(moves)
-      console.log(filteredMoves)
-      return potentialMoves = calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
+      return calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
     }
 
     if (isLeftWall) {
       const badMoves = pieceRules?.movement?.badMoves?.isLeftWall
       filteredMoves = moves.filter((move) => !badMoves?.includes(move));
-      return potentialMoves = calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
+      return calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
     }
 
     if (isNextToRightWall) {
       const badMoves = pieceRules?.movement?.badMoves?.isNextToRightWall
       filteredMoves = moves.filter((move) => !badMoves?.includes(move));
-      return potentialMoves = calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
+      return calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
     }
 
     if (isNextToLeftWall) {
       const badMoves = pieceRules?.movement?.badMoves?.isNextToLeftWall
       filteredMoves = moves.filter((move) => !badMoves?.includes(move));
-      return potentialMoves = calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
+      return calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
     }
-    return potentialMoves = calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
+    return calculateHorse(piece.id, filteredMoves, boardMoves, otherPieces)
   }
   if (isLeftWall) {
     let isPieceOnWall = true
     if (isTopRow) {
       const badMoves = pieceRules?.movement?.badMoves?.isLeftWall.concat(pieceRules?.movement?.badMoves?.isTopRow)
       filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall)
+      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, enemyKing, isCheckingKing)
     }
     else if (isBottomRow) {
       const badMoves = pieceRules?.movement?.badMoves?.isLeftWall.concat(pieceRules?.movement?.badMoves?.isBottomRow)
       filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall)
+      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, enemyKing, isCheckingKing)
     }
     const badMoves = pieceRules?.movement?.badMoves?.isLeftWall
     filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall)
+    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, enemyKing, isCheckingKing)
   }
   if (isRightWall) {
     let isPieceOnWall = true
     if (isTopRow) {
       const badMoves = pieceRules?.movement?.badMoves?.isRightWall.concat(pieceRules?.movement?.badMoves?.isTopRow)
       filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall)
+      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall,  enemyKing, isCheckingKing)
     }
     if (isBottomRow) {
       const badMoves = pieceRules?.movement?.badMoves?.isRightWall.concat(pieceRules?.movement?.badMoves?.isBottomRow)
       filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall)
+      return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, enemyKing, isCheckingKing)
     }
     const badMoves = pieceRules?.movement?.badMoves?.isRightWall
     filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall)
+    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall,  enemyKing, isCheckingKing)
   }
   if (isTopRow) {
-    let isDiagonal = false
-    const badMoves = pieceRules?.movement?.badMoves?.isBottomRow
+    const badMoves = pieceRules?.movement?.badMoves?.isTopRow
     if (badMoves?.includes('DIAGONAL_LEFT_DOWN') || badMoves?.includes('DIAGONAL_RIGHT_DOWN')) {
       isDiagonal = true
     }
     let isPieceOnWall = true
     filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-    console.log(isDiagonal)
-    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal)
+    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, enemyKing, isCheckingKing,isDiagonal)
   }
   if (isBottomRow) {
     const badMoves = pieceRules?.movement?.badMoves?.isBottomRow
-    let isDiagonal = false
-    console.log(badMoves)
-    console.log(badMoves?.includes('DIAGONAL_LEFT_DOWN') || badMoves?.includes('DIAGONAL_RIGHT_DOWN'))
     if (badMoves?.includes('DIAGONAL_LEFT_UP') || badMoves?.includes('DIAGONAL_RIGHT_UP')) {
       isDiagonal = true
     }
     let isPieceOnWall = true
     filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
-    console.log(isDiagonal)
-    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, isDiagonal)
+    return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, enemyKing, isCheckingKing, isDiagonal)
   }
-  return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall)
+  return calculatePiece(piece.id, filteredMoves, boardMoves, otherPieces, walls, isPieceOnWall, enemyKing, isCheckingKing)
   };
 
   const isWall = (square, walls) => {
     return walls.includes(square);
   };
 
-
-  const calculatePiece = (square, moves, sameTeam, otherTeam, walls, isPieceOnWall, isDiagonal ) => {
-    console.log(isPieceOnWall)
-    console.log(isDiagonal)
+  const calculateKing = (square, moves, sameTeam, otherTeam, walls, isPieceOnWall, isDiagonal, boxes, team, isCheckingKing) => {
     let potentialMoves = []
+    let allEnemyTeamMoves = []
+    if (!isCheckingKing) {
+      allEnemyTeamMoves = enemyTeamMoves(square, otherTeam, boxes)
+    }
+      for (var i = 0; i < moves.length; i++) {
+        const move = moves[i];
+        const possibleMovement = square + movement[move]
+        console.log(possibleMovement)
+        if (!sameTeam.includes(possibleMovement)) {
+          if (!allEnemyTeamMoves?.includes(possibleMovement)) {
+              potentialMoves.push(possibleMovement)
+            }
+          }
+        }
+        console.log(potentialMoves)
+        return potentialMoves
+      }
+
+  const enemyTeamMoves = (square, otherTeam, boxes) => {
+    let forbiddenMoves = []
+    let attackedFrom = square
+    otherTeam?.forEach(enemyPiece => {
+      const piece = selectBox(boxes, enemyPiece)?.piece
+        const calculatedPotentialMoves = calculatePotentialMoves(piece, boxes, true)
+        forbiddenMoves = forbiddenMoves.concat(calculatedPotentialMoves)
+    })
+    return forbiddenMoves
+  }
+
+
+
+    // for (var j = 0; j < 7; j++) {
+    //   attackedFrom += movement[move]
+    //   if (!sameTeam.includes(possibleMovement)) {
+    //     if (!enemyKing) {
+    //       if (isWall(possibleMovement, walls)) {
+    //         break
+    //       }
+    //       if (enemyQueen) {
+    //         const forbiddenQueenMoves = calculatePotentialMoves(enemyQueen, boxes)
+    //         console.log(forbiddenQueenMoves)
+    //         if (forbiddenQueenMoves?.includes(possibleMovement)) {
+    //           return true
+    //           break
+    //         } else {
+    //           return false
+    //           break
+    //         }
+    //
+    //       }
+    //       if (otherTeam.includes(attackedFrom)) {
+    //         const enemyPiece = selectBox(boxes, attackedFrom)?.piece
+    //         const enemyMoves = calculatePotentialMoves(enemyPiece, boxes)
+    //         if (enemyMoves?.includes(possibleMovement)) {
+    //           forbiddenMoves?.push(possibleMovement)
+    //           return true
+    //           break
+    //         } else {
+    //           return false
+    //           break
+    //         }
+    //         break
+    //       }
+    //     } else {
+    //       if (enemyQueen) {
+    //         const forbiddenQueenMoves = calculatePotentialMoves(enemyQueen, boxes)
+    //         console.log(forbiddenQueenMoves)
+    //         if (forbiddenQueenMoves?.includes(possibleMovement)) {
+    //           return true
+    //           break
+    //         } else {
+    //           return false
+    //           break
+    //         }
+    //       }
+    //       const checkForPawnMoves = {}
+    //       if (otherTeam.includes(attackedFrom)) {
+    //         console.log('what')
+    //         const enemyPiece = selectBox(boxes, attackedFrom)?.piece
+    //         const forbiddenMoves = calculatePotentialMoves(enemyPiece, boxes)
+    //         console.log('forbiddenMoves')
+    //         if (forbiddenMoves?.includes(possibleMovement)) {
+    //           forbiddenMoves?.push(possibleMovement)
+    //           return true
+    //           break
+    //         } else {
+    //           return false
+    //           break
+    //         }
+    //       }
+    //       if (isDiagonal) {
+    //         if (isWall(possibleMovement, walls)) {
+    //           break
+    //         }
+    //       }
+    //     }
+    //   } else {
+    //     return false
+    //   }
+    // }
+
+  const calculatePiece = (square, moves, sameTeam, otherTeam, walls, isPieceOnWall, enemyKing, isCheckingKing, isDiagonal ) => {
+    let potentialMoves = []
+
     for (var i = 0; i < moves.length; i++) {
       let possibleMovement = square;
       const move = moves[i];
       for (var j = 0; j < 7; j++) {
         possibleMovement += movement[move]
+        console.log(enemyKing.id, possibleMovement, isCheckingKing)
         if (!sameTeam.includes(possibleMovement)) {
           if (otherTeam.includes(possibleMovement)) {
+            if (enemyKing?.id === possibleMovement && isCheckingKing) {
+              potentialMoves.push(possibleMovement)
+            } else {
               potentialMoves.push(possibleMovement)
               break
+            }
           }
           if (!isPieceOnWall) {
             if (isWall(possibleMovement, walls)) {
@@ -376,13 +650,15 @@ export const calculatePotentialMoves = (piece, board) => {
               break
             }
           } else {
-            console.log(isDiagonal)
-            if (otherTeam.includes(possibleMovement, walls)) {
-              potentialMoves.push(possibleMovement)
-              break
+            if (otherTeam.includes(possibleMovement)) {
+              if (enemyKing?.id === possibleMovement && isCheckingKing) {
+                potentialMoves.push(possibleMovement)
+              } else {
+                potentialMoves.push(possibleMovement)
+                break
+              } 
             }
             if (isDiagonal) {
-              console.log('what up')
               if (isWall(possibleMovement, walls)) {
                 potentialMoves.push(possibleMovement)
                 break
@@ -398,7 +674,8 @@ export const calculatePotentialMoves = (piece, board) => {
     return potentialMoves
   }
 
-const calculatePawn = (piece, boardMoves, otherPieces, walls) => {
+const calculatePawn = (piece, boardMoves, otherPieces, walls, isCheckingKing) => {
+  console.log(isCheckingKing)
   let options = [];
   const pieceRules = rules[piece.pieceName];
   const firstMove = pieceRules?.movement?.firstMove;
@@ -420,9 +697,8 @@ const calculatePawn = (piece, boardMoves, otherPieces, walls) => {
   for (var i = 0; i < attackMoves.length; i++) {
     const attack = attackMoves[i];
     const move = moves[i];
-
-    if (otherPieces.includes(piece.id + movement[attack])) {
-      if (!boardMoves.includes(piece.id + movement[move])) {
+    if (otherPieces.includes(piece.id + movement[attack]) || isCheckingKing) {
+      if (!boardMoves.includes(piece.id + movement[move]) && !isCheckingKing) {
         options.push(piece.id + movement[move]);
       }
       options.push(piece.id + movement[attack]);
@@ -479,7 +755,6 @@ const calculateRook = (
         }
         if (pieceIsOnWall) {
           if (isCorner) {
-            console.log(!isWall(possibleMovement))
             if (!isWall(possibleMovement)) {
               break
             } else {
@@ -487,7 +762,6 @@ const calculateRook = (
             }
           }
           if (isBottomOrTopRow && !isCorner) {
-            console.log('hi')
             if (possibleMovement > 55 || (possibleMovement < 8 && piece.id < 7) && move !== 'DOWN1' || move !== 'UP1') {
             options.push(possibleMovement)
           } else {
@@ -496,7 +770,6 @@ const calculateRook = (
         }
 
         if (isSideWall && !isCorner) {
-          console.log('hi')
           if (move[0] === 'RIGHT1' || move[0] === 'LEFT1') {
             if (pieceIsOnWall && possibleMovement !== piece.id + movement[move]) {
               options.push(possibleMovement)
@@ -543,7 +816,6 @@ const calculateBishop = (piece, board, boardMoves, otherPieces, walls, isBottomO
   // DIAGONAL_LEFT_UP: +9,
   // DIAGONAL_RIGHT_UP: +7,
   if (isRightWall) {
-    console.log('right wall')
     const badMoves = ["DIAGONAL_RIGHT_DOWN", "DIAGONAL_LEFT_UP"];
     filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
   }
@@ -552,7 +824,6 @@ const calculateBishop = (piece, board, boardMoves, otherPieces, walls, isBottomO
     const badMoves = ["DIAGONAL_LEFT_DOWN", "DIAGONAL_RIGHT_UP"];
     filteredMoves = moves.filter((move) => !badMoves?.includes(move[0]));
   }
-  console.log(filteredMoves)
   for (var i = 0; i < moves.length; i++) {
     let possibleMovement = piece.id;
     const move = filteredMoves[i];
