@@ -13,6 +13,7 @@ const Board = ({ boxes, selectedPiece, turn, userTeam, preMove}) => {
     // Weird logic here because right now we are both teams. Once Stockfish is set up we will set the
     //user team and the logic will be simpler
     const selectedBox = selectBox(boxes, id)
+    console.log(selectedBox?.piece)
       if (selectedPiece?.team === turn && isPotentialMove) {
         dispatch({ type: "chess/movePiece", payload: id });
       } else if (selectedBox?.piece?.team === turn) {
@@ -21,22 +22,13 @@ const Board = ({ boxes, selectedPiece, turn, userTeam, preMove}) => {
         dispatch({ type: "chess/preMovePiece", payload: {selectedPiece: selectedBox?.piece?.id, selectedSquare: selectedBox?.id} });
       }
 }
-  //   if (selectedPieceTeam === turn) {
-  //     if (!isPotentialMove) {
-  //       dispatch({ type: "chess/highlightPotentialMoves", payload: id });
-  //     } else {
-  //       console.log('what up')
-  //       dispatch({ type: "chess/movePiece", payload: id });
-  //     }
-  //   } else if (userTeam === selectedPieceTeam) {
-  //       dispatch({ type: "chess/preMovePiece", payload: id });
-  //     }
-  // };
 
   const handleSelectPromotion = (pieceName, id) => {
     dispatch({ type: "chess/promotePiece", payload: { pieceName, id } });
   };
+
   const boxMap = boxes?.map((box) => {
+    //Find a better way to overlay/change the background
     const preMoveStyle = box?.hasPiece ? '-100%' : '0%'
     return (
       <>

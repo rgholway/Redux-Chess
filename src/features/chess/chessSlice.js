@@ -1,7 +1,7 @@
 import { createSlice, current } from '@reduxjs/toolkit';
 import update from 'immutability-helper';
 import {boxes} from './ChessConstants'
-import {calculatePotentialMoves} from './PieceConstants'
+import {calculatePotentialMoves, calculateCheck} from './PieceConstants'
 
 export const chessSlice = createSlice({
   name: 'chess',
@@ -74,9 +74,45 @@ export const chessSlice = createSlice({
           return {...box, isPotentialMove: false, isPromotion}
         }
       })
+      const isCheck = calculateCheck(mappedState?.boxes, turn)
+      const attackingPieces = isCheck?.attackingPieces
+      const defendingPieces = isCheck?.piecesDefendingKingFromCheck
+      console.log(defendingPieces)
+      if (attackingPieces?.length) {
+        attackingPieces?.forEach(piece => {
+          mappedState.boxes = mappedState?.boxes.map(box => {
+            if (box?.id === piece) {
+              return {...box, piece: {...box?.piece, isAttackingKing: true}}
+            } else {
+              return {...box, piece: {...box?.piece, isAttackingKing: false}}
+            }
+          })
+        })
+      } else {
+        mappedState.boxes = mappedState?.boxes.map(box => {
+            return {...box, piece: {...box?.piece, isAttackingKing: false}}
+        })
+      }
+      console.log(defendingPieces)
+      if (defendingPieces?.length) {
+        defendingPieces?.forEach(piece => {
+          console.log(piece)
+          mappedState.boxes = mappedState?.boxes.map(box => {
+            if (box?.id === piece?.piece) {
+              return {...box, piece: {...box?.piece, isProtectingKing: piece?.move, }}
+            } else {
+              return {...box, piece: {...box?.piece, isProtectingKing: false}}
+            }
+          })
+        })
+      } else {
+        mappedState.boxes = mappedState?.boxes?.map(box => {
+            return {...box, piece: {...box?.piece, isProtectingKing: false}}
+        })
+      }
       if (preMove?.isLive) {
         const selectedPiece = selectBoxes(currentState, preMove?.selectedPiece)?.piece
-        const calculatedPotentialMoves = calculatePotentialMoves(selectedPiece, mappedState)
+        const calculatedPotentialMoves = calculatePotentialMoves(selectedPiece, mappedState?.boxes)
         const updatedPreMovePiece = {...selectedPiece, id: preMove?.selectedMove, hasMoved: true}
         if (calculatedPotentialMoves?.includes(preMove?.selectedMove) && selectedPiece) {
           whoseTurnIsItAnyways = whoseTurnIsItAnyways === 1 ? 2 : 1

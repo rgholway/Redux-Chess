@@ -21,9 +21,7 @@ const highlightMoves = (e) => {
   // dispatch({type: 'chess/highlightPotentialMoves', payload: potentialMoves})
 }
 
-  const name = className || pieceName
-
-  return (<div className={name} />);
+  return (<div className={className} />);
 };
 
 export default Piece;
